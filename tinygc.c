@@ -41,12 +41,21 @@
  * du tableau (12 = 3 * 4). La première ligne correspond donc naturellement au pointeur sur le début du tableau T
  * (on en déduit que sizeof(int*) = 8 car 24 / 3 = 8).
  * Le GC_collect marque donc le pointeur du tableau, mais pas les lignes ce qui a pour effet des libérer.
+ *
+ * Question 12 :
+ * 1. Les zones DATA et BSS, même si BSS peut être dangereux si certaines variables globales sont initialisées plus loin.
+ *
+ * 2. Appeler GC_collect dans GC_malloc
+ *
+ * 3.
  */
 
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "tinygc.h"
 
 #define WORD_SIZE 4
 
@@ -82,8 +91,6 @@ void print_list(cell_t *list);
 
 void insert_BLOCKS(address_t start, size_t size);
 
-void *GC_malloc(size_t size);
-
 void mark_BLOCK(address_t v);
 
 void mark_region(address_t start, address_t end);
@@ -112,24 +119,34 @@ address_t STACK_TOP;
 address_t HEAP_BOTTOM;
 
 /*
+ * Initialize the garbage collector
+ */
+void GC_init(int argc) {
+    STACK_TOP = (address_t) &argc;
+    int *t = malloc(1);
+    HEAP_BOTTOM = (address_t) t;
+    free(t);
+}
+
+/*
  * display an ASCII representation of a linked list of blocks
  */
 void print_list(cell_t *list) {
-    fprintf(stderr, "  +-------+------------------+----------+------+\n");
-    fprintf(stderr, "  | index |     address      |   size   | used |\n");
-    fprintf(stderr, "  +-------+------------------+----------+------+\n");
+    DEBUG(2, "  +-------+------------------+----------+------+\n");
+    DEBUG(2, "  | index |     address      |   size   | used |\n");
+    DEBUG(2, "  +-------+------------------+----------+------+\n");
 
     cell_t *p;
     int index = 0;
     for (p = list; p != NULL; p = p->next) {
-        fprintf(stderr, "  |  %03i  |  %10p  |  %6zu  |  %c   |\n",
+        DEBUG(2, "  |  %03i  |  %10p  |  %6zu  |  %c   |\n",
                 index++,
                 p->start,
                 p->size,
                 p->flags % 2 == 1 ? '*' : ' ');
     }
 
-    fprintf(stderr, "  +-------+------------------+----------+------+\n");
+    DEBUG(2, "  +-------+------------------+----------+------+\n");
 }
 
 /*
@@ -139,6 +156,7 @@ void print_list(cell_t *list) {
 void *GC_malloc(size_t size) {
     void *t = malloc(size);
     insert_BLOCKS(t, size);
+    GC_collect();
     return t;
 }
 
@@ -170,7 +188,7 @@ void mark_BLOCK(address_t v) {
  */
 void mark_from_heap() {
     int *t = malloc(1);
-    printf("tas : %p -> %p\n", HEAP_BOTTOM, (void *) t);
+    DEBUG(1, "tas : %p -> %p\n", HEAP_BOTTOM, (void *) t);
     mark_region(HEAP_BOTTOM, (address_t) t);
     free(t);
 }
@@ -180,7 +198,7 @@ void mark_from_heap() {
  */
 void mark_from_stack() {
     int tmp;
-    printf("pile : %p -> %p\n", (void *) &tmp, STACK_TOP);
+    DEBUG(1, "pile : %p -> %p\n", (void *) &tmp, STACK_TOP);
     mark_region((address_t) &tmp, STACK_TOP);
 }
 
@@ -235,20 +253,13 @@ void test() {
     }
 
     print_list(BLOCKS);
-
-    GC_collect();
-
-    print_list(BLOCKS);
 }
 
 /***************************************************************************
  ***   ``main`` function   *************************************************
  ***************************************************************************/
 int main(int argc, char **argv) {
-    int tmp;
-    STACK_TOP = (address_t) &tmp;
-    int *t = malloc(1);
-    HEAP_BOTTOM = (address_t) t;
+    GC_init(argc);
 
     // get first command line argument for verbosity
     if (argc > 1) {
@@ -258,7 +269,6 @@ int main(int argc, char **argv) {
     // tests
     test();
 
-    free(t);
     return 0;
 }
 
