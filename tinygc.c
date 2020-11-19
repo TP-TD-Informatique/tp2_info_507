@@ -5,7 +5,8 @@
  ***/
 
 /*
- * Question 10 : résultat
+ * Question 10 :
+ * Résultat ->
   +-------+------------------+----------+------+
   | index |     address      |   size   | used |
   +-------+------------------+----------+------+
@@ -20,6 +21,26 @@
   |  000  |  0x55a577e0e2f0  |       4  |  *   |
   |  001  |  0x55a577e0e390  |       1  |  *   |
   +-------+------------------+----------+------+
+ *
+ * Question 11 :
+ * Avec size qui vaut 3, on obtient ->
+  +-------+------------------+----------+------+
+  | index |     address      |   size   | used |
+  +-------+------------------+----------+------+
+  |  000  |  0x55e22b4552a0  |      24  |      |
+  |  001  |  0x55e22b4552f0  |      12  |      |
+  |  002  |  0x55e22b455340  |      12  |      |
+  |  003  |  0x55e22b455390  |      12  |      |
+  +-------+------------------+----------+------+
+  +-------+------------------+----------+------+
+  | index |     address      |   size   | used |
+  +-------+------------------+----------+------+
+  |  000  |  0x55e22b4552a0  |      24  |  *   |
+  +-------+------------------+----------+------+
+ * Ainsi, on remarque que sur la première liste les 3 dernières lignes correspondent aux 3 malloc pour chaque lignes
+ * du tableau (12 = 3 * 4). La première ligne correspond donc naturellement au pointeur sur le début du tableau T
+ * (on en déduit que sizeof(int*) = 8 car 24 / 3 = 8).
+ * Le GC_collect marque donc le pointeur du tableau, mais pas les lignes ce qui a pour effet des libérer.
  */
 
 #include <inttypes.h>
@@ -85,6 +106,10 @@ cell_t *BLOCKS = NULL;
  * needs to be initialized in ``main``.
  */
 address_t STACK_TOP;
+/*
+ * Global variable containing the address of the start of the heap (need to be initialized in 'main')
+ */
+address_t HEAP_BOTTOM;
 
 /*
  * display an ASCII representation of a linked list of blocks
@@ -141,10 +166,21 @@ void mark_BLOCK(address_t v) {
 }
 
 /*
+ * mark blocks referenced from the stack
+ */
+void mark_from_heap() {
+    int *t = malloc(1);
+    printf("tas : %p -> %p\n", HEAP_BOTTOM, (void *) t);
+    mark_region(HEAP_BOTTOM, (address_t) t);
+    free(t);
+}
+
+/*
  * mark blocks referenced from the stack,
  */
 void mark_from_stack() {
     int tmp;
+    printf("pile : %p -> %p\n", (void *) &tmp, STACK_TOP);
     mark_region((address_t) &tmp, STACK_TOP);
 }
 
@@ -164,7 +200,7 @@ void GC_collect() {
     mark_from_stack();
 
     // mark blocks referenced from heap
-    // TODO
+    mark_from_heap();
 
     // free all unused blocks
     cell_t *tmp;
@@ -192,16 +228,11 @@ void GC_collect() {
 /***************************************************************************
  **** tests ****************************************************************/
 void test() {
-    int *a = GC_malloc(sizeof(int));
-    a = NULL;
-    int *b = GC_malloc(sizeof(int));
-    *b = 2;
-    int *c = GC_malloc(sizeof(int));
-    c = NULL;
-    char *d = GC_malloc(sizeof(char));
-    *d = 'd';
-    printf("%p", (void *) a);
-    printf("%p\n\n", (void *) c);
+    int size = 3;
+    int **T = GC_malloc(size * sizeof(int *));
+    for (int i = 0; i < size; i++) {
+        T[i] = GC_malloc(size * sizeof(int));
+    }
 
     print_list(BLOCKS);
 
@@ -216,6 +247,8 @@ void test() {
 int main(int argc, char **argv) {
     int tmp;
     STACK_TOP = (address_t) &tmp;
+    int *t = malloc(1);
+    HEAP_BOTTOM = (address_t) t;
 
     // get first command line argument for verbosity
     if (argc > 1) {
@@ -225,6 +258,7 @@ int main(int argc, char **argv) {
     // tests
     test();
 
+    free(t);
     return 0;
 }
 
