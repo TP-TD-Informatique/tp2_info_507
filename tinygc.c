@@ -4,6 +4,24 @@
  * Kevin Traini
  ***/
 
+/*
+ * Question 10 : résultat
+  +-------+------------------+----------+------+
+  | index |     address      |   size   | used |
+  +-------+------------------+----------+------+
+  |  000  |  0x55a577e0e2a0  |       4  |      |
+  |  001  |  0x55a577e0e2f0  |       4  |      |
+  |  002  |  0x55a577e0e340  |       4  |      |
+  |  003  |  0x55a577e0e390  |       1  |      |
+  +-------+------------------+----------+------+
+  +-------+------------------+----------+------+
+  | index |     address      |   size   | used |
+  +-------+------------------+----------+------+
+  |  000  |  0x55a577e0e2f0  |       4  |  *   |
+  |  001  |  0x55a577e0e390  |       1  |  *   |
+  +-------+------------------+----------+------+
+ */
+
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -174,15 +192,22 @@ void GC_collect() {
 /***************************************************************************
  **** tests ****************************************************************/
 void test() {
-    int *t = GC_malloc(sizeof(int));
-    int *p = GC_malloc(2 * sizeof(int));
+    int *a = GC_malloc(sizeof(int));
+    a = NULL;
+    int *b = GC_malloc(sizeof(int));
+    *b = 2;
+    int *c = GC_malloc(sizeof(int));
+    c = NULL;
+    char *d = GC_malloc(sizeof(char));
+    *d = 'd';
+    printf("%p", (void *) a);
+    printf("%p\n\n", (void *) c);
 
     print_list(BLOCKS);
 
-    mark_from_stack();
+    GC_collect();
 
-    free(t);
-    free(p);
+    print_list(BLOCKS);
 }
 
 /***************************************************************************
