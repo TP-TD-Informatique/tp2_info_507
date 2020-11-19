@@ -106,7 +106,7 @@ void mark_region(address_t start, address_t end) {
     address_t p; // pointer to memory
     address_t v; // value at pointer p
     for (p = start; p < end; p += WORD_SIZE) {
-        //v = *p;
+        v = (address_t) *((uint64_t *) p);
         mark_BLOCK(v);
     }
 }
