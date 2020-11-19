@@ -125,7 +125,10 @@ void mark_BLOCK(address_t v) {
 /*
  * mark blocks referenced from the stack,
  */
-void mark_from_stack() { return; }
+void mark_from_stack() {
+    int tmp;
+    mark_region((address_t) &tmp, STACK_TOP);
+}
 
 /*
  * look at the stack and heap for references to user allocated blocks, and
@@ -176,6 +179,8 @@ void test() {
 
     print_list(BLOCKS);
 
+    mark_from_stack();
+
     free(t);
     free(p);
 }
@@ -184,8 +189,8 @@ void test() {
  ***   ``main`` function   *************************************************
  ***************************************************************************/
 int main(int argc, char **argv) {
-    // TODO
-    // STACK_TOP = NULL;
+    int tmp;
+    STACK_TOP = (address_t) &tmp;
 
     // get first command line argument for verbosity
     if (argc > 1) {
