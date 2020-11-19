@@ -94,8 +94,9 @@ void print_list(cell_t *list) {
  * blocks inside global variable ``BLOCKS``
  */
 void *GC_malloc(size_t size) {
-    // TODO
-    return NULL;
+    void* t = malloc(size);
+    insert_BLOCKS(t, size);
+    return t;
 }
 
 /*
@@ -168,10 +169,8 @@ void GC_collect() {
 /***************************************************************************
  **** tests ****************************************************************/
 void test() {
-    int *t = malloc(sizeof(int));
-    insert_BLOCKS((address_t) t, sizeof(int));
-    int *p = malloc(2 * sizeof(int));
-    insert_BLOCKS((address_t) p, 2 * sizeof(int));
+    int *t = GC_malloc(sizeof(int));
+    int *p = GC_malloc(2 * sizeof(int));
 
     print_list(BLOCKS);
 
