@@ -103,10 +103,10 @@ void *GC_malloc(size_t size) {
  * mark blocks from a memory region
  */
 void mark_region(address_t start, address_t end) {
-    address_t p = NULL; // pointer to memory
-    address_t v = NULL; // value at pointer p
+    address_t p; // pointer to memory
+    address_t v; // value at pointer p
     for (p = start; p < end; p += WORD_SIZE) {
-        // v = *p; //       WARNING!!!
+        //v = *p;
         mark_BLOCK(v);
     }
 }
@@ -115,9 +115,11 @@ void mark_region(address_t start, address_t end) {
  * mark the block containing address ``v`` as used
  */
 void mark_BLOCK(address_t v) {
-    // look at all blocks in ``BLOCKS`` list:
-    // if the address ``v`` is inside the block, mark it as used
-    // TODO
+    for (cell_t *p = BLOCKS; p != NULL; p = p->next) {
+        if (p->start <= v && p->start + p->size > v) {
+            p->flags = 1;
+        }
+    }
 }
 
 /*
