@@ -21,7 +21,7 @@ int VERBOSE = 0;
  * ``void*`` is not appropriate because C fordids pointer arithmetic on
  * ``void*``...
  */
-typedef char* address_t;
+typedef char *address_t;
 
 /*
  * type of linked lists
@@ -33,29 +33,34 @@ typedef struct cell {
     address_t start;
     size_t size;
     int flags; // least significant bit is set to 1 when block is used
-    struct cell* next;
+    struct cell *next;
 } cell_t;
 
 /*
  * prototypes
  */
-void print_list(cell_t* list);
+void print_list(cell_t *list);
+
 void insert_BLOCKS(address_t start, size_t size);
 
-void* GC_malloc(size_t size);
+void *GC_malloc(size_t size);
+
 void mark_BLOCK(address_t v);
+
 void mark_region(address_t start, address_t end);
+
 void mark_from_heap();
+
 void mark_from_stack();
 
 void GC_collect();
 
-void DEBUG(int v, char* format, ...);
+void DEBUG(int v, char *format, ...);
 
 /*
  * GLOBAL variable containing the list of user allocated blocks
  */
-cell_t* BLOCKS = NULL;
+cell_t *BLOCKS = NULL;
 
 /*
  * GLOBAL variable containing the address of the start of the stack (this
@@ -66,32 +71,29 @@ address_t STACK_TOP;
 /*
  * display an ASCII representation of a linked list of blocks
  */
-void print_list(cell_t* list)
-{
-    fprintf(stderr, "  +-------+--------------+----------+------+\n");
-    fprintf(stderr, "  | index |   address    |   size   | used |\n");
-    fprintf(stderr, "  +-------+--------------+----------+------+\n");
-    /*
+void print_list(cell_t *list) {
+    fprintf(stderr, "  +-------+------------------+----------+------+\n");
+    fprintf(stderr, "  | index |     address      |   size   | used |\n");
+    fprintf(stderr, "  +-------+------------------+----------+------+\n");
+
     cell_t *p;
     int index = 0;
-    for (TODO; TODO; TODO) {
+    for (p = list; p != NULL; p = p->next) {
         fprintf(stderr, "  |  %03i  |  %10p  |  %6zu  |  %c   |\n",
-                        index,
-                        TODO,
-                        TODO,
-                        TODO);
-        index++;
+                index++,
+                p->start,
+                p->size,
+                p->flags == 1 ? '*' : ' ');
     }
-    */
-    fprintf(stderr, "  +-------+--------------+----------+------+\n");
+
+    fprintf(stderr, "  +-------+------------------+----------+------+\n");
 }
 
 /*
  * special malloc that calls system's malloc and records the corresponding
  * blocks inside global variable ``BLOCKS``
  */
-void* GC_malloc(size_t size)
-{
+void *GC_malloc(size_t size) {
     // TODO
     return NULL;
 }
@@ -99,8 +101,7 @@ void* GC_malloc(size_t size)
 /*
  * mark blocks from a memory region
  */
-void mark_region(address_t start, address_t end)
-{
+void mark_region(address_t start, address_t end) {
     address_t p = NULL; // pointer to memory
     address_t v = NULL; // value at pointer p
     for (p = start; p < end; p += WORD_SIZE) {
@@ -112,8 +113,7 @@ void mark_region(address_t start, address_t end)
 /*
  * mark the block containing address ``v`` as used
  */
-void mark_BLOCK(address_t v)
-{
+void mark_BLOCK(address_t v) {
     // look at all blocks in ``BLOCKS`` list:
     // if the address ``v`` is inside the block, mark it as used
     // TODO
@@ -128,10 +128,9 @@ void mark_from_stack() { return; }
  * look at the stack and heap for references to user allocated blocks, and
  * free all the blocks that were not referenced
  */
-void GC_collect()
-{
+void GC_collect() {
     // unmark all blocks
-    cell_t* p;
+    cell_t *p;
     for (p = BLOCKS; p != NULL; p = p->next) {
         // set "used" bit to 0
         p->flags &= ~1;
@@ -144,9 +143,9 @@ void GC_collect()
     // TODO
 
     // free all unused blocks
-    cell_t* tmp;
+    cell_t *tmp;
     p = BLOCKS;
-    cell_t* prev = NULL;
+    cell_t *prev = NULL;
     while (p != NULL) {
         if (!(p->flags & 1)) {
             free(p->start);
@@ -168,18 +167,22 @@ void GC_collect()
 
 /***************************************************************************
  **** tests ****************************************************************/
-void test()
-{
-    // quelques tests...
-    printf("quelques test :\n");
-    // TODO
+void test() {
+    int *t = malloc(sizeof(int));
+    insert_BLOCKS((address_t) t, sizeof(int));
+    int *p = malloc(2 * sizeof(int));
+    insert_BLOCKS((address_t) p, 2 * sizeof(int));
+
+    print_list(BLOCKS);
+
+    free(t);
+    free(p);
 }
 
 /***************************************************************************
  ***   ``main`` function   *************************************************
  ***************************************************************************/
-int main(int argc, char** argv)
-{
+int main(int argc, char **argv) {
     // TODO
     // STACK_TOP = NULL;
 
@@ -210,8 +213,7 @@ int main(int argc, char** argv)
  * Note: the global variable ``VERBOSE`` is initialized in ``main`` as the
  * value of the first argument ``argv[1]``.
  */
-void DEBUG(int v, char* format, ...)
-{
+void DEBUG(int v, char *format, ...) {
     va_list args;
     if (v <= VERBOSE) {
         va_start(args, format);
@@ -223,9 +225,8 @@ void DEBUG(int v, char* format, ...)
 /*
  * insert a new cell into the global variable ``BLOCKS``
  */
-void insert_BLOCKS(address_t start, size_t size)
-{
-    cell_t* c = malloc(sizeof(cell_t));
+void insert_BLOCKS(address_t start, size_t size) {
+    cell_t *c = malloc(sizeof(cell_t));
     c->start = start;
     c->size = size;
     c->next = NULL;
@@ -240,7 +241,7 @@ void insert_BLOCKS(address_t start, size_t size)
         BLOCKS = c;
     } else {
         // otherwise, look for position just before the new cell
-        cell_t* p;
+        cell_t *p;
         for (p = BLOCKS; p->next != NULL; p = p->next) {
             if (p->next->start > c->start) {
                 break;
