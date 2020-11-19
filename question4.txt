@@ -1,0 +1,39 @@
+/****
+ * info507: système d'exploitation
+ * TP2
+ * Kevin Traini
+ ***/
+
+Représentation de la mémoire
+
+Adresse haute
+|***********************|-------------------------------------------------|
+|                       | <-- variables locales                           |
+|          PILE         |   & tableaux statiques                          |
+|                       |   & arguments des fonctions                     |
+|***********************|                                                 |
+|                       |                                                 |
+|                       |                                                 |
+.                       .                                                 |
+.  MEMOIRE NON ALLOUEE  .                                                 |
+.                       .                                                 |
+|                       |                                                 |
+|                       |                                                 |
+|***********************|                                                 |
+|                       |                                                 |
+|          TAS          | <-- tableaux dynamiques                         | --> Mémoire du programme
+|                       |   & variables statiques                         |
+|***********************|                                                 |
+|                       |                                                 |
+|          BSS          | <-- variables globales non initialisées         |
+|                       |                                                 |
+|***********************|                                                 |
+|                       |                                                 |
+|          DATA         | <-- variable globales initialisées              |
+|                       |                                                 |
+|***********************|                                                 |
+|                       |                                                 |
+|          TEXT         | <-- code du programme                           |
+|                       |                                                 |
+|***********************|-------------------------------------------------|
+Adresse basse
