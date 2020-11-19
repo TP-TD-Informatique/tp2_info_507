@@ -83,7 +83,7 @@ void print_list(cell_t *list) {
                 index++,
                 p->start,
                 p->size,
-                p->flags == 1 ? '*' : ' ');
+                p->flags % 2 == 1 ? '*' : ' ');
     }
 
     fprintf(stderr, "  +-------+------------------+----------+------+\n");
@@ -94,7 +94,7 @@ void print_list(cell_t *list) {
  * blocks inside global variable ``BLOCKS``
  */
 void *GC_malloc(size_t size) {
-    void* t = malloc(size);
+    void *t = malloc(size);
     insert_BLOCKS(t, size);
     return t;
 }
